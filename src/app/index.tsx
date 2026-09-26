@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { FlatList } from "react-native";
 import { ScrollView } from "react-native";
 import { TextInput, Pressable } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CONTACTS } from "../data/contact";
 
 
 
@@ -15,6 +16,7 @@ const START_MESSAGES = [
 ];
 
 
+
 function Bubble({ text, mine }: { text: string; mine?: boolean }) {
   return (
     <View style={[styles.bubble, mine && styles.bubbleMine]}>
@@ -22,6 +24,36 @@ function Bubble({ text, mine }: { text: string; mine?: boolean }) {
     </View>
   );
 }
+
+
+function ContactRow({
+  contact,
+  selected,
+  onPress,
+}: {
+  contact: (typeof CONTACTS)[number];
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.row, selected && styles.rowSelected]}
+    >
+      <View style={styles.row}>
+        <Image
+          source={`https://i.pravatar.cc/100?u=${contact.id}`}
+          style={styles.avatar}
+        />
+        <View style={styles.rowText}>
+          <Text style={styles.name}>{contact.name}</Text>
+          <Text style={styles.program}>{contact.program}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 
 
 export default function Chat() {
@@ -88,6 +120,54 @@ export default function Chat() {
   );
 }
 
+export function Contacts() {
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const filtered = useMemo(
+    () =>
+      CONTACTS.filter((c) =>
+        c.name.toLowerCase().includes(query.trim().toLowerCase())
+      ),
+    [query]
+  );
+
+  return (
+    <FlatList
+      data={filtered}
+      keyExtractor={(c) => c.id}
+      renderItem={({ item }) => (
+        <ContactRow
+          contact={item}
+          selected={item.id === selectedId}
+          onPress={() => setSelectedId(item.id)}
+        />
+      )}
+
+      ListHeaderComponent={
+        <View>
+          <View style={styles.headerRow}>
+            <Text style={styles.h1}>Contacts</Text>
+            <Text style={styles.count}>({filtered.length})</Text>
+          </View>
+          <TextInput
+            style={styles.search}
+            placeholder="Search…"
+            value={query}
+            onChangeText={setQuery}
+          />
+        </View>
+      }
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ListEmptyComponent={
+        <Text style={styles.empty}>No contact matches "{query}".</Text>
+      }
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ padding: 16 }}
+    />
+  );
+}
+
 
 
 const styles = StyleSheet.create({
@@ -100,8 +180,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 10,                    // space between photo and name
   },
-  avatar: { width: 40, height: 40, borderRadius: 20 },
-  name: { fontSize: 17, fontWeight: "bold" },
+  //avatar: { width: 40, height: 40, borderRadius: 20 },
+  //name: { fontSize: 17, fontWeight: "bold" },
 
   messages: { flex: 1, backgroundColor: "#f4f4f4" },
   bubble: {
@@ -146,7 +226,29 @@ const styles = StyleSheet.create({
   },
   sendLabel: { color: "#fff", fontSize: 16 },
 
-  empty: { textAlign: "center", color: "#888", paddingVertical: 32 },
+  //empty: { textAlign: "center", color: "#888", paddingVertical: 32 },
   dateLabel: { textAlign: "center", color: "#888", fontSize: 12, paddingBottom: 8 },
+
+  row: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 },
+  avatar: { width: 44, height: 44, borderRadius: 22 },
+  rowText: { flex: 1 },
+  name: { fontSize: 16, fontWeight: "600" },
+  program: { fontSize: 13, color: "#666" },
+
+  headerRow: {
+    flexDirection: "row", justifyContent: "space-between",
+    alignItems: "center", paddingBottom: 8
+  },
+  h1: { fontSize: 22, fontWeight: "bold", color: "#1a5276" },
+  count: { color: "#888" },
+  separator: { height: 1, backgroundColor: "#e5e5e5" },
+  empty: { textAlign: "center", color: "#888", paddingVertical: 32 },
+
+  search: {
+    height: 40, borderWidth: 1, borderColor: "#ccc", borderRadius: 20,
+    paddingHorizontal: 14, marginBottom: 12
+  },
+  rowSelected: { backgroundColor: "#dbeafe", borderRadius: 8, paddingHorizontal: 8 },
+
 
 });
