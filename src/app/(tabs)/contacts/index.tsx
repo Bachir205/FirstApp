@@ -2,11 +2,11 @@ import { useState, useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { FlatList } from "react-native";
-import { ScrollView } from "react-native";
 import { TextInput, Pressable } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CONTACTS } from "../data/contact";
-
+import { ContactRow } from "@/components/ContactRow";
+import { CONTACTS } from "@/data/contacts";
+import { Bubble } from "@/components/Bubble";
 
 
 const START_MESSAGES = [
@@ -17,46 +17,56 @@ const START_MESSAGES = [
 
 
 
-function Bubble({ text, mine }: { text: string; mine?: boolean }) {
-  return (
-    <View style={[styles.bubble, mine && styles.bubbleMine]}>
-      <Text style={mine && styles.textMine}>{text}</Text>
-    </View>
+export default function Contacts() {
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const filtered = useMemo(
+    () =>
+      CONTACTS.filter((c) =>
+        c.name.toLowerCase().includes(query.trim().toLowerCase())
+      ),
+    [query]
   );
-}
 
-
-function ContactRow({
-  contact,
-  selected,
-  onPress,
-}: {
-  contact: (typeof CONTACTS)[number];
-  selected: boolean;
-  onPress: () => void;
-}) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.row, selected && styles.rowSelected]}
-    >
-      <View style={styles.row}>
-        <Image
-          source={`https://i.pravatar.cc/100?u=${contact.id}`}
-          style={styles.avatar}
+    <FlatList
+      data={filtered}
+      keyExtractor={(c) => c.id}
+      renderItem={({ item }) => (
+        <ContactRow
+          contact={item}
+          selected={item.id === selectedId}
+          onPress={() => setSelectedId(item.id)}
         />
-        <View style={styles.rowText}>
-          <Text style={styles.name}>{contact.name}</Text>
-          <Text style={styles.program}>{contact.program}</Text>
+      )}
+
+      ListHeaderComponent={
+        <View>
+          <View style={styles.headerRow}>
+            <Text style={styles.h1}>Contacts</Text>
+            <Text style={styles.count}>({filtered.length})</Text>
+          </View>
+          <TextInput
+            style={styles.search}
+            placeholder="Search…"
+            value={query}
+            onChangeText={setQuery}
+          />
         </View>
-      </View>
-    </Pressable>
+      }
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ListEmptyComponent={
+        <Text style={styles.empty}>No contact matches "{query}".</Text>
+      }
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ padding: 16 }}
+    />
   );
 }
 
 
-
-export default function Chat() {
+export  function Chat() {
   const [messages, setMessages] = useState(START_MESSAGES);
   const [draft, setDraft] = useState("");
 
@@ -120,53 +130,7 @@ export default function Chat() {
   );
 }
 
-export function Contacts() {
-  const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      CONTACTS.filter((c) =>
-        c.name.toLowerCase().includes(query.trim().toLowerCase())
-      ),
-    [query]
-  );
-
-  return (
-    <FlatList
-      data={filtered}
-      keyExtractor={(c) => c.id}
-      renderItem={({ item }) => (
-        <ContactRow
-          contact={item}
-          selected={item.id === selectedId}
-          onPress={() => setSelectedId(item.id)}
-        />
-      )}
-
-      ListHeaderComponent={
-        <View>
-          <View style={styles.headerRow}>
-            <Text style={styles.h1}>Contacts</Text>
-            <Text style={styles.count}>({filtered.length})</Text>
-          </View>
-          <TextInput
-            style={styles.search}
-            placeholder="Search…"
-            value={query}
-            onChangeText={setQuery}
-          />
-        </View>
-      }
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      ListEmptyComponent={
-        <Text style={styles.empty}>No contact matches "{query}".</Text>
-      }
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ padding: 16 }}
-    />
-  );
-}
 
 
 
